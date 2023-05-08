@@ -2,7 +2,7 @@
     <div class="form-group">
         <div class="row">
             <div class="col-sm-8">
-                <h4>Hospedes</h4>
+                <h4>Cliente</h4>
             </div>
             <div class="col-sm-4 text-right">
                 <button class="btn btn-primary" id="novo">Adicionar</button>
@@ -25,7 +25,7 @@
         <div class="table-responsive ml-3">
             <table class="table table-sm mr-4 mt-3" id="lista">     
                 <?php
-                    $hospedes = $this->buscaHospedes($request);
+                    $hospedes = $this->buscaCliente($request);
                     if(!empty($hospedes)) {
                 ?>
                 <thead>
@@ -197,7 +197,7 @@
                       icon: 'success',
                       title: 'OhoWW...',
                       text: data.message,
-                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/hospedes">Atualizar?</a>'
+                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                   }).then(()=>{
                     window.location.reload();    
                 })
@@ -206,7 +206,7 @@
                       icon: 'warning',
                       title: 'ops...',
                       text: data.message,
-                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/hospedes">Atualizar?</a>'
+                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                   })
           });
       }
@@ -219,7 +219,7 @@
             dataType: 'json     ',
             success: function(data){
                 if(data.status === 201){
-                    preparaModalEditarHospedes(data.data);
+                    preparaModalEditarCliente(data.data);
                 }
             }
         })
@@ -229,7 +229,7 @@
                     icon: 'success',
                     title: 'OhoWW...',
                     text: data.message,
-                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/hospedes">Atualizar?</a>'
+                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                 }).then(()=>{
                     window.location.reload();    
                 })
@@ -239,13 +239,13 @@
                     icon: 'warning',
                     title: 'ops...',
                     text: "Algo de errado aconteceu!",
-                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/hospedes">Atualizar?</a>'
+                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
             })
         });
         return "";
     }
 
-    function preparaModalEditarHospedes(data) {
+    function preparaModalEditarCliente(data) {
         $('#nome').val(data[0].nome);
         $('#email').val(data[0].email);         
         $('#cpf').val(data[0].cpf);         
@@ -256,17 +256,17 @@
         $('#status').val(data[0].status);
         $('#id').val(data[0].id);
         $('#btnSubmit').addClass('Atualizar');
-        $('#exampleModalLabel').text("Atualizar Hospedes");
+        $('#exampleModalLabel').text("Atualizar Cliente");
         $('#modal').modal('show');   
     }
 
     $('#btn_busca').click(function(){
         var texto = $('#txt_busca').val();
-        window.location.href ="<?=ROTA_GERAL?>/Administrativo/hospedes/"+texto;
+        window.location.href ="<?=ROTA_GERAL?>/Administrativo/cliente/"+texto;
     });
 
     $('#novo').click(function(){
-        $('#exampleModalLabel').text("Cadastro de Hospedes");
+        $('#exampleModalLabel').text("Cadastro de Cliente");
         $('#modal').modal('show');        
     });
 
@@ -277,26 +277,26 @@
 
         $(document).on('click','.Salvar',function(){
             event.preventDefault();
-            envioRequisicaoPostViaAjax('Hospede/salvarHospedes', new FormData(document.getElementById("form")));
+            envioRequisicaoPostViaAjax('Cliente/salvarCliente', new FormData(document.getElementById("form")));
         });
 
         $(document).on('click','.view_data',function(){
             var id = $(this).attr("id");
             $('#btnSubmit').removeClass('Salvar');
-            envioRequisicaoGetViaAjax('Hospede/buscaHospedePorId/' + id);
+            envioRequisicaoGetViaAjax('Cliente/buscaClientePorId/' + id);
         });
 
         $(document).on('click','.Atualizar',function(){
             event.preventDefault();
             $('#btnSubmit').attr('disabled','disabled');
             var id = $('#id').val();
-            envioRequisicaoPostViaAjax('Hospede/atualizarHospedes/' + id, new FormData(document.getElementById("form")));   
+            envioRequisicaoPostViaAjax('Cliente/atualizarCliente/' + id, new FormData(document.getElementById("form")));   
         });
 
         $(document).on('click','.view_Ativo',function(){    
             event.preventDefault();
             var code=$(this).attr("id");
-            envioRequisicaoGetViaAjax('Hospede/changeStatusHospedes/'+ code);
+            envioRequisicaoGetViaAjax('Cliente/changeStatusCliente/'+ code);
         });    
         
     });

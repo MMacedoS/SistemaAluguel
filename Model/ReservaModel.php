@@ -14,7 +14,7 @@ class ReservaModel extends ConexaoModel {
 
     protected $model = 'reserva';
 
-    protected $apartamento_model;
+    protected $material_model;
 
     protected $consumo_model;
 
@@ -22,7 +22,7 @@ class ReservaModel extends ConexaoModel {
     {
         $this->conexao = ConexaoModel::conexao();
 
-        $this->apartamento_model = new ApartamentoModel();
+        $this->material_model = new MaterialModel();
         $this->consumo_model = new ConsumoModel();
     }
 
@@ -32,50 +32,14 @@ class ReservaModel extends ConexaoModel {
 
         if(is_null($validation)){
             
-            if($this->verificareservaSeExiste($dados))
-            {   
-                return $this->insertReserva($dados); 
-            }
+          
+            return $this->insertReserva($dados); 
 
-            return self::message(422, 'Reserva existente!');
+          
         }
 
         return $validation;
-    }
-
-    private function verificaReservaSeExiste($dados)
-    {
-        $hospede = (int)$dados['hospedes'];
-        $dataEntrada = (string)$dados['entrada'];
-        $dataSaida = (string)$dados['saida'];
-        $tipo = (int)$dados['tipo'];
-        $apartamento = (int)$dados['apartamento'];
-        $status = (int)$dados['status'];
-        
-        $cmd = $this->conexao->query(
-            "SELECT 
-                *
-            FROM
-                $this->model
-            WHERE
-                hospede_id = '$hospede'
-            AND 
-                apartamento_id = '$apartamento'
-            AND
-                tipo = '$tipo'
-            AND
-                dataEntrada = '$dataEntrada'
-            AND
-                dataSaida = '$dataSaida'"
-        );
-
-        if($cmd->rowCount()>0)
-        {
-            return false;
-        }
-
-        return true;
-    }
+    }    
 
     private function insertReserva($dados)
     {
@@ -85,29 +49,31 @@ class ReservaModel extends ConexaoModel {
                 "INSERT INTO 
                     $this->model 
                 SET 
-                    dataReserva = :dataReserva, 
-                    dataEntrada = :dataEntrada, 
-                    dataSaida = :dataSaida,
+                    data_reserva = :data_reserva, 
+                    data_devolucao = :data_devolucao, 
+                    data_retirada = :data_retirada,
                     obs = :observacao,
-                    apartamento_id = :apartamento_id,
-                    tipo = :tipo,
-                    hospede_id = :hospede_id,
-                    valor = :valor,
+                    responsavel = :responsavel,
+                    cliente_id = :cliente_id,
+                    telefone = :telefone,
                     status = :status,
+                    multa = :multa,
+                    endereco = :endereco,
                     funcionario =  :funcionario
                     "
                 );
 
-            $cmd->bindValue(':dataReserva', Date('Y-m-d'));
-            $cmd->bindValue(':dataEntrada',$dados['entrada']);
-            $cmd->bindValue(':dataSaida',$dados['saida']);
-            $cmd->bindValue(':apartamento_id',$dados['apartamento']);
-            $cmd->bindValue(':valor',$dados['valor']);
+            $cmd->bindValue(':data_reserva', Date('Y-m-d'));
+            $cmd->bindValue(':data_devolucao', self::prepareDateUS($dados['saida']));
+            $cmd->bindValue(':data_retirada', self::prepareDateUS($dados['entrada']));
+            $cmd->bindValue(':responsavel',$dados['responsavel']);
+            $cmd->bindValue(':multa',$dados['multa']);
             $cmd->bindValue(':status',$dados['status']);
-            $cmd->bindValue(':tipo',$dados['tipo']);
+            $cmd->bindValue(':telefone',$dados['telefone']);
             $cmd->bindValue(':observacao',$dados['observacao']);
-            $cmd->bindValue(':hospede_id',$dados['hospedes']);
+            $cmd->bindValue(':cliente_id',$dados['cliente']);
             $cmd->bindValue(':funcionario',$_SESSION['code']);
+            $cmd->bindValue(':endereco',$dados['endereco']);
             $dados = $cmd->execute();
 
             $this->conexao->commit();
@@ -141,30 +107,33 @@ class ReservaModel extends ConexaoModel {
                 "UPDATE 
                     $this->model 
                 SET 
-                    dataEntrada = :dataEntrada, 
-                    dataSaida = :dataSaida,
+                    data_reserva = :data_reserva, 
+                    data_devolucao = :data_devolucao, 
+                    data_retirada = :data_retirada,
                     obs = :observacao,
-                    apartamento_id = :apartamento_id,
-                    tipo = :tipo,
-                    hospede_id = :hospede_id,
-                    valor = :valor,
+                    responsavel = :responsavel,
+                    cliente_id = :cliente_id,
+                    funcionario = :funcionario,
+                    telefone = :telefone,
                     status = :status,
-                    placa = :placa,
+                    multa = :multa,
+                    endereco = :endereco,
                     funcionario =  :funcionario
                 WHERE 
                     id = :id"
                 );
 
-                $cmd->bindValue(':dataEntrada',$dados['entrada']);
-                $cmd->bindValue(':dataSaida',$dados['saida']);
-                $cmd->bindValue(':apartamento_id',$dados['apartamento']);
-                $cmd->bindValue(':valor',$dados['valor']);
+                $cmd->bindValue(':data_reserva', Date('Y-m-d'));
+                $cmd->bindValue(':data_devolucao', self::prepareDateUS($dados['saida']));
+                $cmd->bindValue(':data_retirada', self::prepareDateUS($dados['entrada']));
+                $cmd->bindValue(':responsavel',$dados['responsavel']);
+                $cmd->bindValue(':multa',$dados['multa']);
                 $cmd->bindValue(':status',$dados['status']);
-                $cmd->bindValue(':tipo',$dados['tipo']);
+                $cmd->bindValue(':telefone',$dados['telefone']);
                 $cmd->bindValue(':observacao',$dados['observacao']);
-                $cmd->bindValue(':hospede_id',$dados['hospedes']);
-                $cmd->bindValue(':placa',$dados['placa']);
+                $cmd->bindValue(':cliente_id',$dados['cliente']);
                 $cmd->bindValue(':funcionario',$_SESSION['code']);
+                $cmd->bindValue(':endereco',$dados['endereco']);
                 $cmd->bindValue(':id',$id);
             $dados = $cmd->execute();
 
@@ -182,31 +151,22 @@ class ReservaModel extends ConexaoModel {
 
         $SQL = "SELECT 
                     r.*, 
-                    h.nome, 
-                    a.numero 
+                    h.nome
                 FROM 
                     $this->model r 
                 INNER JOIN
-                    hospede h 
+                    cliente h 
                 ON 
-                    r.hospede_id = h.id
-                LEFT JOIN 
-                    empresa_has_hospede eh
-                ON 
-                    eh.hospede_id = h.id
-                INNER JOIN 
-                    apartamento a 
-                ON 
-                    r.apartamento_id = a.id
+                    r.cliente_id = h.id
                 WHERE
-                    r.status LIKE '%$status%' 
+                    r.status LIKE '%$status%'  
                 ";
         
         if(!empty($entrada)){
             $SQL.= "
             AND
             (
-                dataEntrada 
+                r.data_retirada 
                     BETWEEN 
                         '$entrada' 
                     AND 
@@ -243,28 +203,19 @@ class ReservaModel extends ConexaoModel {
         $cmd  = $this->conexao->query(
             "SELECT 
                 r.*, 
-                h.nome, 
-                a.numero 
+                h.nome
             FROM 
                 $this->model r 
             INNER JOIN
-                hospede h 
+                cliente h 
             ON 
-                r.hospede_id = h.id
-            LEFT JOIN 
-                empresa_has_hospede eh
-            ON 
-                eh.hospede_id = h.id
-            INNER JOIN 
-                apartamento a 
-            ON 
-                r.apartamento_id = a.id
+                r.cliente_id = h.id
             WHERE
                 h.nome LIKE '%$nome%'
              AND
                 r.status <=2   
              AND
-                r.dataEntrada >= DATE_SUB(curdate(), INTERVAL 3 DAY) 
+                r.data_retirada >= DATE_SUB(curdate(), INTERVAL 3 DAY) 
             ORDER BY
                 r.id DESC
             LIMIT 12 offset $off 
@@ -298,7 +249,7 @@ class ReservaModel extends ConexaoModel {
             );
     }
 
-    private function updateStatusReserva($status, $id, $apartamento)
+    private function updateStatusReserva($status, $id)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -312,10 +263,7 @@ class ReservaModel extends ConexaoModel {
                 );
             $cmd->bindValue(':status',$status);
             $cmd->bindValue(':id',$id);
-            $dados = $cmd->execute();
-            
-            $this->apartamento_model->prepareChangedApartamentoStatus($apartamento, 2);
-
+            $dados = $cmd->execute();     
             $this->conexao->commit();
             
             return self::messageWithData(200, "dados Atualizados!!", []);
@@ -342,7 +290,7 @@ class ReservaModel extends ConexaoModel {
             $cmd->bindValue(':id',$id);
             $dados = $cmd->execute();
             
-            $this->apartamento_model->prepareChangedApartamentoStatus($apartamento, 1);
+            $this->material_model->prepareChangedMaterialStatus($apartamento, 1);
 
             $this->conexao->commit();
             
@@ -361,89 +309,11 @@ class ReservaModel extends ConexaoModel {
         if(is_null($reserva)) {
             return self::messageWithData(422, 'reserva não encontrado', []);
         }
-       
-        $apartamento = $this->apartamento_model->findById($reserva['data'][0]['apartamento_id']);
-
-        if($apartamento['data'][0]['status'] != 1) {
-            return self::messageWithData(422, 'Apartamento não esta disponivel', []);
-        }
-
-        $dados = [
-            'id' => $reserva['data'][0]['id'],
-            'valor' => $reserva['data'][0]['valor'],
-        ];
-
-        $this->insertDiariaConsumo($dados, date('Y-m-d H:i:s'));
 
         return $this->updateStatusReserva(
             3,
-            $id,
-            $apartamento['data'][0]['id']
+            $id
         );
-    }
-
-    public function apartamentoDisponiveisPorData($dataStart, $dataEnd)
-    {
-
-        $dados = [];
-
-        $this->conexao->beginTransaction();
-
-        $arrayReservas = self::prepareGetIdApartamento(
-            $this->getReservasPorData($dataStart, $dataEnd)
-        );
-
-        try {
-            $cmd = $this->conexao->query(
-                "SELECT 
-                    id, 
-                    numero 
-                FROM 
-                    apartamento 
-                WHERE 
-                    id not in 
-                (
-                    SELECT 
-                        apartamento_id
-                    FROM 
-                        reserva
-                    WHERE 
-                        (status <= 3)
-                    AND 
-                    ( 
-                        (
-                            dataEntrada >= '$dataStart' 
-                            AND 
-                            dataEntrada < '$dataEnd'
-                        ) 
-                        OR 
-                        (
-                            dataSaida > '$dataStart' 
-                            AND 
-                            dataSaida <= '$dataEnd'
-                        ) 
-                        OR 
-                        (
-                            dataEntrada <= '$dataStart' 
-                            AND 
-                            dataSaida >= '$dataEnd' 
-                        )
-                    )
-                )
-                "
-            );
-    
-            if($cmd->rowCount() > 0)
-            {
-                $dados = $cmd->fetchAll(PDO::FETCH_ASSOC);
-            }
-            $this->conexao->commit();
-            return self::messageWithData(200, 'apartamentos encontrados', $dados);
-
-        } catch (\Throwable $th) {
-            $this->conexao->rollback();
-            return self::messageWithData(422, $th->getMessage(), []);
-        }
     }
 
     private function getReservasPorData($dataStart, $dataEnd)
@@ -484,32 +354,45 @@ class ReservaModel extends ConexaoModel {
         return [];
     }
 
-    public function buscaHospedadas($texto)
+    public function buscaHospedadas($nome, $status, $entrada = null, $saida = null)
     {
-        $cmd  = $this->conexao->query(
-            "SELECT 
-                r.*, 
-                h.nome, 
-                a.numero 
-            FROM 
-                $this->model r 
-            INNER JOIN
-                hospede h 
-            ON 
-                r.hospede_id = h.id
-            LEFT JOIN 
-                empresa_has_hospede eh
-            ON 
-                eh.hospede_id = h.id
-            INNER JOIN 
-                apartamento a 
-            ON 
-                r.apartamento_id = a.id
-            WHERE
-               r.status = 3
+        $SQL = "SELECT 
+                    r.*, 
+                    h.nome
+                FROM 
+                    $this->model r 
+                INNER JOIN
+                    cliente h 
+                ON 
+                    r.cliente_id = h.id
+                WHERE
+                    r.status LIKE '%$status%'  
+                ";
+        
+        if(!empty($entrada)){
+            $SQL.= "
             AND
-                h.nome LIKE '%$texto%'
-            "
+            (
+                r.data_retirada 
+                    BETWEEN 
+                        '$entrada' 
+                    AND 
+                        '$saida'
+                                       
+            )";
+        }
+
+        if(!empty($nome)){
+            $SQL.= "
+            AND
+            (
+                h.nome LIKE '%$nome%' 
+                                       
+            )";
+        }
+
+        $cmd  = $this->conexao->query(
+            $SQL
         );
 
         if($cmd->rowCount() > 0)
@@ -529,7 +412,7 @@ class ReservaModel extends ConexaoModel {
             return self::messageWithData(422, 'reserva não encontrado', []);
         }
 
-        $apartamento = $this->apartamento_model->findById($reserva['data'][0]['apartamento_id'])['data'][0]['id'];
+        $apartamento = $this->material_model->findById($reserva['data'][0]['apartamento_id'])['data'][0]['id'];
 
         return $this->updateStatusCheckoutReserva(
             4,
@@ -543,22 +426,13 @@ class ReservaModel extends ConexaoModel {
         $cmd  = $this->conexao->query(
             "SELECT 
                 r.*, 
-                h.nome, 
-                a.numero 
+                h.nome
             FROM 
                 $this->model r 
             INNER JOIN
-                hospede h 
+                cliente h 
             ON 
-                r.hospede_id = h.id
-            LEFT JOIN 
-                empresa_has_hospede eh
-            ON 
-                eh.hospede_id = h.id
-            INNER JOIN 
-                apartamento a 
-            ON 
-                r.apartamento_id = a.id
+                r.cliente_id = h.id   
             WHERE
                (
                     r.status = 1 
@@ -566,9 +440,9 @@ class ReservaModel extends ConexaoModel {
                     r.status= 2
                )
                AND
-                dataEntrada <= curdate()
+                data_retirada <= curdate()
                AND
-                dataEntrada >= DATE_SUB(curdate(), INTERVAL 1 DAY)
+                data_retirada >= DATE_SUB(curdate(), INTERVAL 1 DAY)
             AND
                 h.nome LIKE '%$nome%'
             "
@@ -588,26 +462,17 @@ class ReservaModel extends ConexaoModel {
         $cmd  = $this->conexao->query(
             "SELECT 
                 r.*, 
-                h.nome, 
-                a.numero 
+                h.nome
             FROM 
                 $this->model r 
             INNER JOIN
-                hospede h 
+                cliente h 
             ON 
-                r.hospede_id = h.id
-            LEFT JOIN 
-                empresa_has_hospede eh
-            ON 
-                eh.hospede_id = h.id
-            INNER JOIN 
-                apartamento a 
-            ON 
-                r.apartamento_id = a.id
+                r.cliente_id = h.id           
             WHERE
                 r.status = 3
                AND
-                dataSaida <= curdate()
+                r.data_devolucao <= curdate()
             AND
                 h.nome LIKE '%$nome%'
             "
@@ -665,20 +530,15 @@ class ReservaModel extends ConexaoModel {
         $cmd  = $this->conexao->query(
             "SELECT 
                 r.*, 
-                h.nome, 
-                a.numero,
-                COALESCE((SELECT sum(valorUnitario * quantidade) FROM consumo c where c.reserva_id = r.id), 0) as consumos,
+                h.nome,
+                COALESCE((SELECT sum(valor * quantidade) FROM consumo c where c.reserva_id = r.id), 0) as consumos,
                 COALESCE((SELECT sum(p.valorPagamento) FROM pagamento p where p.reserva_id = r.id), 0) as pag
             FROM 
                 `reserva` r 
             INNER JOIN 
-                hospede h 
+                cliente h 
             on 
-                r.hospede_id = h.id 
-            INNER JOIN 
-                apartamento a 
-            on 
-                a.id = r.apartamento_id 
+                r.cliente_id = h.id 
             WHERE 
                 r.id = $id
             "

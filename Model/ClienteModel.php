@@ -3,48 +3,59 @@
 require_once 'Trait/StandartTrait.php';
 require_once 'Trait/FindTrait.php';
 
-class ApartamentoModel extends ConexaoModel {
+class ClienteModel extends ConexaoModel {
 
     use StandartTrait;
     use FindTrait;
     
     protected $conexao;
 
-    protected $model = 'apartamento';
+    protected $model = 'cliente';
 
     public function __construct() 
     {
         $this->conexao = ConexaoModel::conexao();
     }
 
-    public function prepareInsertApartamento($dados)
+    public function prepareInsertCliente($dados)
     {
-        $validation = self::requiredParametros($dados);
+
+        // $validation = self::requiredParametros($dados);
+        $validation = null;
+        if(empty($dados['nome']))
+        {
+            return self::message(422, 'preencha o nome do Hóspede');
+        }
 
         if(is_null($validation)){
             
-            if($this->verificaApartamentoSeExiste($dados))
+            if($this->verificaClientesSeExiste($dados))
             {   
-                return $this->insertApartamento($dados); 
+                return $this->insertCliente($dados); 
             }
 
-            return self::message(422, 'apartamento existente!');
+            return self::message(422, 'Clientes existente!');
         }
 
         return $validation;
     }
 
-    private function verificaApartamentoSeExiste($dados)
+    private function verificaClientesSeExiste($dados)
     {
-        $apartamento = (int)$dados['apartamento'];
-
+        $email = (string)$dados['email'];
+        $nome = (string)$dados['nome'];
+        
+        if (empty($email)) {
+            return true;    
+        }
+        
         $cmd = $this->conexao->query(
             "SELECT 
                 *
             FROM
                 $this->model
             WHERE
-                numero = $apartamento"
+                email = '$email'"
         );
 
         if($cmd->rowCount()>0)
@@ -55,7 +66,7 @@ class ApartamentoModel extends ConexaoModel {
         return true;
     }
 
-    private function insertApartamento($dados)
+    private function insertCliente($dados)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -63,16 +74,23 @@ class ApartamentoModel extends ConexaoModel {
                 "INSERT INTO 
                     $this->model 
                 SET 
-                    numero = :apartamento, 
-                    descricao = :descricao, 
+                    nome = :nome, 
+                    email = :email, 
+                    cpf = :cpf,
+                    status = :status,
+                    telefone = :telefone,
                     tipo = :tipo,
-                    status = :status"
+                    endereco = :endereco
+                    "
                 );
 
-            $cmd->bindValue(':apartamento',$dados['apartamento']);
-            $cmd->bindValue(':descricao',$dados['descricao']);
-            $cmd->bindValue(':tipo',$dados['tipo']);
+            $cmd->bindValue(':nome',$dados['nome']);
+            $cmd->bindValue(':email',$dados['email']);
             $cmd->bindValue(':status',$dados['status']);
+            $cmd->bindValue(':tipo',$dados['tipo']);
+            $cmd->bindValue(':endereco',$dados['endereco']);
+            $cmd->bindValue(':telefone',$dados['telefone']);
+            $cmd->bindValue(':cpf',$dados['cpf']);
             $dados = $cmd->execute();
 
             $this->conexao->commit();
@@ -84,18 +102,18 @@ class ApartamentoModel extends ConexaoModel {
         }
     }
 
-    public function prepareUpdateApartamento($dados, $id)
+    public function prepareUpdateCliente($dados, $id)
     {
         $validation = self::requiredParametros($dados);
 
         if(is_null($validation)){            
-            return $this->updateApartamento($dados, $id); 
+            return $this->updateCliente($dados, $id); 
         }
 
         return $validation;
     }
 
-    private function updateApartamento($dados, int $id)
+    private function updateCliente($dados, int $id)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -103,18 +121,24 @@ class ApartamentoModel extends ConexaoModel {
                 "UPDATE 
                     $this->model 
                 SET 
-                    numero = :apartamento, 
-                    descricao = :descricao, 
+                    nome = :nome, 
+                    email = :email, 
+                    cpf = :cpf,
+                    status = :status,
+                    telefone = :telefone,
                     tipo = :tipo,
-                    status = :status
+                    endereco = :endereco
                 WHERE 
                     id = :id"
                 );
 
-            $cmd->bindValue(':apartamento',$dados['apartamento']);
-            $cmd->bindValue(':descricao',$dados['descricao']);
-            $cmd->bindValue(':tipo',$dados['tipo']);
+            $cmd->bindValue(':nome',$dados['nome']);
+            $cmd->bindValue(':email',$dados['email']);
             $cmd->bindValue(':status',$dados['status']);
+            $cmd->bindValue(':tipo',$dados['tipo']);
+            $cmd->bindValue(':endereco',$dados['endereco']);
+            $cmd->bindValue(':telefone',$dados['telefone']);
+            $cmd->bindValue(':cpf',$dados['cpf']);
             $cmd->bindValue(':id',$id);
             $dados = $cmd->execute();
 
@@ -127,7 +151,7 @@ class ApartamentoModel extends ConexaoModel {
         }
     }
 
-    public function findApartamentos($request)
+    public function findCliente($request)
     {
         $cmd  = $this->conexao->query(
             "SELECT 
@@ -135,7 +159,11 @@ class ApartamentoModel extends ConexaoModel {
             FROM
                 $this->model
             WHERE 
-                numero
+                email
+            LIKE
+                '%$request%'
+            OR
+                nome
             LIKE
                 '%$request%'"
         );
@@ -149,18 +177,21 @@ class ApartamentoModel extends ConexaoModel {
         
     }
 
-    public function prepareChangedApartamento($id)
+    public function prepareChangedCliente($id)
     {
-        $apartamento = self::findById($id);
+        $Clientes = self::findById($id);
 
-        if(is_null($apartamento)) {
-            return self::messageWithData(422, 'apartamento não encontrado', []);
+        if(is_null($Clientes)) {
+            return self::messageWithData(422, 'Clientes não encontrado', []);
         }
 
-        return $this->updateStatusApartamento(1, $id);
+        $Clientes['data'][0]['status'] == '1' ? $status = 0 : $status = 1;
+        return $this->updateStatusCliente(
+            $status,
+            $id);
     }
 
-    private function updateStatusApartamento($status, $id)
+    private function updateStatusCliente($status, $id)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -177,42 +208,12 @@ class ApartamentoModel extends ConexaoModel {
             $dados = $cmd->execute();
 
             $this->conexao->commit();
+            
             return self::messageWithData(200, "dados Atualizados!!", []);
 
         } catch (\Throwable $th) {
             $this->conexao->rollback();
             return self::message(422, $th->getMessage());
         }
-    }
-
-    public function prepareChangedApartamentoStatus($id, $status)
-    {
-        $apartamento = self::findById($id);
-
-        if(is_null($apartamento)) {
-            return self::messageWithData(422, 'apartamento não encontrado', []);
-        }
-
-        return $this->updateStatusApartamento($status, $id);
-    }
-
-
-    public function getApartamento()
-    {
-        $cmd  = $this->conexao->query(
-            "SELECT 
-                * 
-            FROM
-                $this->model
-            WHERE 
-                status = 1"
-        );
-
-        if($cmd->rowCount() > 0)
-        {
-            return $cmd->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        return [];
     }
 }

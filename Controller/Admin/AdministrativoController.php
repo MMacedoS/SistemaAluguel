@@ -5,7 +5,9 @@ class AdministrativoController extends \Controller{
     
     public function __construct() {
         $this->validPainel();     
-        $this->financeiro_controller = new FinanceiroController();       
+        $this->financeiro_controller = new FinanceiroController();  
+        $this->material_model = new MaterialModel();      
+        $this->cliente_model = new ClienteModel();  
     }
 
     private function validPainel() {        
@@ -20,48 +22,41 @@ class AdministrativoController extends \Controller{
         $this->viewAdmin('consultas');
     }
 
-    public function apartamentos($request = null) {
-        $this->viewAdmin('apartamentos',$request,"");
+    // material
+    public function material($request = null) {
+        $this->viewAdmin('material',$request,"");
     }
-    
-    public function buscaApartamentos($request =  null)
+
+    public function buscaMaterial($request = null)
     {
-        $apartamento_controller = new ApartamentoController();
-        return $apartamento_controller->buscaApartamentos($request);
+        return $this->material_model->findMaterial($request);
     }
+    //
 
-    public function funcionarios($request = null) {
-        $this->viewAdmin('funcionarios',$request,"");
-    }
-
-    public function buscaFuncionarios($request =  null)
+    // clientes
+    public function clientes()
     {
-        $funcionario_controller = new FuncionarioController();
-        return $funcionario_controller->buscaFuncionarios($request);
+        $this->viewAdmin('cliente',$request,"");
     }
 
-    public function hospedes($request = null) {
-        $this->viewAdmin('hospedes',$request,"");
-    }
-
-    public function buscaHospedes($request =  null)
+    public function buscaCliente($request = null)
     {
-        $hospedes_controller = new HospedeController();
-        return $hospedes_controller->buscaHospedes($request);
+        return $this->cliente_model->findCliente($request);
     }
 
-    public function reservas($request = null) {
-        $this->viewAdmin('reservas',$request,"");
-    }
+     // reservas
+     public function reservas($request = null)
+     {
+         $this->viewAdmin('reservas',$request,"");
+     }
+ 
+     public function buscaReservas($request = null)
+     {
+        $reserva_controller = new ReservaController();  
+        return $reserva_controller->buscaReservas($request);     }
 
     public function consultas($request = null) {
-        $this->viewAdmin('consultas',$request,"");
-    }
-
-    public function buscaReservas($request =  null)
-    {        
-        $reservas_controller = new ReservaController();
-        return $reservas_controller->buscaReservas($request);
+            $this->viewAdmin('consultas',$request,"");
     }
 
     public function hospedadas($request = null) {
@@ -82,82 +77,6 @@ class AdministrativoController extends \Controller{
     {        
         $reservas_controller = new ReservaController();
         return $reservas_controller->buscaCheckin($request);
-    }
-
-    public function listproduto()
-    {
-        $this->produto_model = new ProdutoModel();     
-        return $this->produto_model->getProdutos($request);
-    }
-
-    public function listApartamento()
-    {
-        $this->apartamento_model = new ApartamentoModel();     
-        return $this->apartamento_model->getApartamento();
-    }
-
-    public function checkout($request = null) {
-        $this->viewAdmin('checkout',$request,"");
-    }
-
-    public function disponiveis(){
-        $this->viewAdmin('disponiveis',$request,"");
-    }
-
-    public function buscaCheckout($request =  null)
-    {        
-        $reservas_controller = new ReservaController();
-        return $reservas_controller->buscaCheckout($request);
-    }
-
-    public function confirmada($request = null) {
-        $this->viewAdmin('confirmada',$request,"");
-    }
-
-    public function buscaConfirmada($request =  null)
-    {        
-        $reservas_controller = new ReservaController();
-        return $reservas_controller->buscaConfirmada($request);
-    }
-
-    public function produtos($request = null) {
-        $this->viewAdmin('produtos',$request,"");
-    }
-
-    public function buscaProdutos($request =  null)
-    {        
-        $produto_controller = new ProdutoController();
-        return $produto_controller->buscaProduto($request);
-    }
-
-    public function buscaEntradaProdutos($request =  null)
-    {        
-        $produto_controller = new ProdutoController();
-        return $produto_controller->buscaEntradaProdutos();
-    }
-
-    public function entradaEstoque($request = null) {
-        $this->viewAdmin('entradaEstoque',$request,"");
-    }
-
-    public function estoque($request = null) {
-        $this->viewAdmin('estoque',$request,"");
-    }
-
-    public function buscaEstoques($request = null) {
-        $produto_controller = new ProdutoController();
-        return $produto_controller->buscaEstoques($request);
-    }
-
-    public function buscaEntradaEstoques($request = null) {
-        $produto_controller = new ProdutoController();
-        return $produto_controller->buscaEntradaProduto($request);
-    }
-
-    public function buscaProdutosSelect()
-    {        
-        $produto_controller = new ProdutoController();
-        return $produto_controller->buscaProdutos();
     }
 
     public function movimentacoes($request = null)
@@ -189,5 +108,18 @@ class AdministrativoController extends \Controller{
     {
         return $this->financeiro_controller->buscaSaida($request);
     }
+        //menu
+    
+
+    public function listMaterial()
+    {
+        return [];
+    }
+
+    public function buscaCheckout()
+    {
+        return [];
+    }
+
 
 }

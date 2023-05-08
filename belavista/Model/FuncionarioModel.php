@@ -3,51 +3,40 @@
 require_once 'Trait/StandartTrait.php';
 require_once 'Trait/FindTrait.php';
 
-class HospedeModel extends ConexaoModel {
+class FuncionarioModel extends ConexaoModel {
 
     use StandartTrait;
     use FindTrait;
     
     protected $conexao;
 
-    protected $model = 'hospede';
+    protected $model = 'usuarios';
 
     public function __construct() 
     {
         $this->conexao = ConexaoModel::conexao();
     }
 
-    public function prepareInsertHospede($dados)
+    public function prepareInsertFuncionario($dados)
     {
-
-        // $validation = self::requiredParametros($dados);
-        $validation = null;
-        if(empty($dados['nome']))
-        {
-            return self::message(422, 'preencha o nome do Hóspede');
-        }
+        $validation = self::requiredParametros($dados);
 
         if(is_null($validation)){
             
-            if($this->verificaHospedesSeExiste($dados))
+            if($this->verificaFuncionarioSeExiste($dados))
             {   
-                return $this->insertHospede($dados); 
+                return $this->insertFuncionario($dados); 
             }
 
-            return self::message(422, 'Hospedes existente!');
+            return self::message(422, 'Funcionario existente!');
         }
 
         return $validation;
     }
 
-    private function verificaHospedesSeExiste($dados)
+    private function verificaFuncionarioSeExiste($dados)
     {
         $email = (string)$dados['email'];
-        $nome = (string)$dados['nome'];
-        
-        if (empty($email)) {
-            return true;    
-        }
         
         $cmd = $this->conexao->query(
             "SELECT 
@@ -66,7 +55,7 @@ class HospedeModel extends ConexaoModel {
         return true;
     }
 
-    private function insertHospede($dados)
+    private function insertFuncionario($dados)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -76,21 +65,17 @@ class HospedeModel extends ConexaoModel {
                 SET 
                     nome = :nome, 
                     email = :email, 
-                    cpf = :cpf,
+                    senha = :senha,
                     status = :status,
-                    telefone = :telefone,
-                    tipo = :tipo,
-                    endereco = :endereco
+                    painel = :painel
                     "
                 );
 
             $cmd->bindValue(':nome',$dados['nome']);
             $cmd->bindValue(':email',$dados['email']);
             $cmd->bindValue(':status',$dados['status']);
-            $cmd->bindValue(':tipo',$dados['tipo']);
-            $cmd->bindValue(':endereco',$dados['endereco']);
-            $cmd->bindValue(':telefone',$dados['telefone']);
-            $cmd->bindValue(':cpf',$dados['cpf']);
+            $cmd->bindValue(':painel',$dados['painel']);
+            $cmd->bindValue(':senha',md5($dados['senha']));
             $dados = $cmd->execute();
 
             $this->conexao->commit();
@@ -102,18 +87,18 @@ class HospedeModel extends ConexaoModel {
         }
     }
 
-    public function prepareUpdateHospede($dados, $id)
+    public function prepareUpdateFuncionario($dados, $id)
     {
         $validation = self::requiredParametros($dados);
 
         if(is_null($validation)){            
-            return $this->updateHospede($dados, $id); 
+            return $this->updateFuncionario($dados, $id); 
         }
 
         return $validation;
     }
 
-    private function updateHospede($dados, int $id)
+    private function updateFuncionario($dados, int $id)
     {
         $this->conexao->beginTransaction();
         try {      
@@ -123,11 +108,8 @@ class HospedeModel extends ConexaoModel {
                 SET 
                     nome = :nome, 
                     email = :email, 
-                    cpf = :cpf,
                     status = :status,
-                    telefone = :telefone,
-                    tipo = :tipo,
-                    endereco = :endereco
+                    painel = :painel
                 WHERE 
                     id = :id"
                 );
@@ -135,10 +117,7 @@ class HospedeModel extends ConexaoModel {
             $cmd->bindValue(':nome',$dados['nome']);
             $cmd->bindValue(':email',$dados['email']);
             $cmd->bindValue(':status',$dados['status']);
-            $cmd->bindValue(':tipo',$dados['tipo']);
-            $cmd->bindValue(':endereco',$dados['endereco']);
-            $cmd->bindValue(':telefone',$dados['telefone']);
-            $cmd->bindValue(':cpf',$dados['cpf']);
+            $cmd->bindValue(':painel',$dados['painel']);
             $cmd->bindValue(':id',$id);
             $dados = $cmd->execute();
 
@@ -151,7 +130,7 @@ class HospedeModel extends ConexaoModel {
         }
     }
 
-    public function findHospedes($request)
+    public function findFuncionarios($request)
     {
         $cmd  = $this->conexao->query(
             "SELECT 
@@ -177,21 +156,21 @@ class HospedeModel extends ConexaoModel {
         
     }
 
-    public function prepareChangedHospede($id)
+    public function prepareChangedFuncionario($id)
     {
-        $hospedes = self::findById($id);
+        $funcionario = self::findById($id);
 
-        if(is_null($hospedes)) {
-            return self::messageWithData(422, 'hospedes não encontrado', []);
+        if(is_null($funcionario)) {
+            return self::messageWithData(422, 'Funcionario não encontrado', []);
         }
 
-        $hospedes['data'][0]['status'] == '1' ? $status = 0 : $status = 1;
-        return $this->updateStatusHospede(
-            $status,
+        $funcionario['data'][0]['status'] == '1' ? $funcionario = 0 : $funcionario = 1;
+        return $this->updateStatusFuncionario(
+            $funcionario,
             $id);
     }
 
-    private function updateStatusHospede($status, $id)
+    private function updateStatusFuncionario($status, $id)
     {
         $this->conexao->beginTransaction();
         try {      

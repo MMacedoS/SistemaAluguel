@@ -2,7 +2,7 @@
     <div class="form-group">
         <div class="row">
             <div class="col-sm-8">
-                <h4>Apartamentos</h4>
+                <h4>Cliente</h4>
             </div>
             <div class="col-sm-4 text-right">
                 <button class="btn btn-primary" id="novo">Adicionar</button>
@@ -25,12 +25,14 @@
         <div class="table-responsive ml-3">
             <table class="table table-sm mr-4 mt-3" id="lista">     
                 <?php
-                    $apartamentos = $this->buscaApartamentos($request);
-                    if(!empty($apartamentos)) {
+                    $hospedes = $this->buscaCliente($request);
+                    if(!empty($hospedes)) {
                 ?>
                 <thead>
                     <tr>
-                        <th scope="col">Apartamento</th>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">tefelone</th>
                         <th scope="col">Tipo</th>
                         <th scope="col">Status</th>
                         <th colspan="2">Ações</th>
@@ -38,26 +40,21 @@
                 </thead>
                 <tbody>
                     <?php
-                        foreach ($apartamentos as $key => $value) {
+                        foreach ($hospedes as $key => $value) {
                             echo '
                                 <tr>
-                                    <td>' . $value['numero'] . '</td>
+                                    <td>' . $value['nome'] . '</td>
+                                    <td>' . $value['email'] . '</td>
+                                    <td>' . $value['telefone'] . '</td>
                                     <td>' . $value['tipo'] . '</td>';
                                 switch ($value['status']) {
-                                    case '4':
+                                    case '0':
                                             echo " <td>Inativo</td>";
                                         break;
                                     case '1':
                                         echo " <td>Disponivel</td>";
                                     break;
                                     
-                                    case '2':
-                                        echo " <td>Ocupado</td>";
-                                    break;
-
-                                    case '3':
-                                        echo " <td>Sujo</td>";
-                                    break;
                                     default:
                                         # code...
                                         break;
@@ -65,11 +62,11 @@
                                     
                             echo '
                                 <td><button type="button" class="btn btn-outline-primary view_data" id="'.$value['id'].'" >Editar</button> &nbsp;';                        
-                                if($value['status'] == "4"){
+                                if($value['status'] == "0"){
                                     echo '<button type="button" class="btn btn-outline-primary view_Ativo" id="'.$value['id'].'" >Ativar</button> &nbsp;';
                                 } 
-                                if($value['status'] == '3'){
-                                    echo '<button type="button" class="btn btn-outline-danger view_sujo" id="'.$value['id'].'" >Limpar</button> &nbsp;';
+                                if($value['status'] == '1'){
+                                    echo '<button type="button" class="btn btn-outline-danger view_Ativo" id="'.$value['id'].'" >Inativar</button> &nbsp;';
                                 }
                                     '</td>
                                 </tr>
@@ -85,12 +82,12 @@
     
 
 <!-- editar -->
-<div class="modal fade" id="modalApartamentos" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Cadastro de Apartamentos</h5>
+                <h5 class="modal-title" id="exampleModalLabel">Cadastro de Hospedes</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -101,34 +98,60 @@
                     <div class="form-row">
                         <div class="col-sm-6">
                             <input type="hidden" disabled id="id" >
-                            <label for="">Apartamentos</label>
-                            <input type="number" step="0" min="0" class="form-control" id="apartamento" name="apartamento" placeholder="Numero do apartamento" required value="">
+                            <label for="">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" placeholder="nome do funcionario" required value="">
                         </div>
                         <div class="col-sm-6">
-                            <label for="">Descrição</label>
-                            <input type="text" class="form-control" id="descricao" name="descricao" placeholder="descrição" required value="">
+                            <label for="">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="email" required value="">
                         </div>
                     </div>                   
                     <div class="form-row">
                         <div class="col-sm-6">
-                            <label for="">Tipo</label>
-                            <select name="tipo" class="form-control" id="tipo">
-                                <option value="Standart">Standart</option>
-                                <option value="Suite">Suite</option>
-                                <option value="Triplo">Triplo</option>
-                                <option value="Quadruplo">Quadruplo</option>
-                            </select>
+                            <label for="">CPF</label>
+                            <input type="text" name="cpf" id="cpf"  placeholder="ex: 05555544455" class="form-control">
                         </div>
                         <div class="col-sm-6">
+                            <label for="">Telefone</label>
+                            <input type="text" name="telefone" id="telefone"  placeholder="ex: 75989745632" class="form-control">
+                        </div>                       
+                        <div class="col-sm-12">
+                            <label for="">Endereço</label>
+                            <input type="text" name="endereco" id="endereco"  placeholder="ex: Rua 1, n 20, cidade - BA" class="form-control">
+                        </div>   
+                    </div>    
+                    
+                    <div class="form-row">
+                        <div class="col-sm-4">
+                            <label for="">Tipo</label>
+                            <select name="tipo" class="form-control" id="tipo">
+                                <option value="1">Normal</option>
+                                <option value="2">Representante</option>
+                            </select>
+                        </div>
+
+                        <!-- <div class="col-sm-5">
+                            <label for="">Empresa</label>
+                            <select name="empresa" class="form-control" id="empresa">
+                                <option value="">Selecione ...</option>
+                                <option value="1">MMS</option>
+                            </select>
+                        </div> -->
+                        <!-- <div class="col-sm-1 mt-1">
+                            <label for="">&nbsp;</label>
+                            <button class="btn btn-primary mt-4">+</button>
+
+                        </div> -->
+
+                        <div class="col-sm-4">
                             <label for="">Status</label>
                             <select name="status" class="form-control" id="status">
                                 <option value="1">Disponível</option>
-                                <option value="2">Ocupado</option>
-                                <option value="3">Sujo</option>
-                                <option value="4">Inativo</option>
+                                <option value="1">Inativo</option>
                             </select>
                         </div>
-                    </div>     
+                    </div>   
+
                     <small>
                         <div align="center" class="mt-1" id="mensagem">
                             
@@ -174,7 +197,7 @@
                       icon: 'success',
                       title: 'OhoWW...',
                       text: data.message,
-                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/apartamentos">Atualizar?</a>'
+                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                   }).then(()=>{
                     window.location.reload();    
                 })
@@ -183,7 +206,7 @@
                       icon: 'warning',
                       title: 'ops...',
                       text: data.message,
-                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/apartamentos">Atualizar?</a>'
+                      footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                   })
           });
       }
@@ -196,7 +219,7 @@
             dataType: 'json     ',
             success: function(data){
                 if(data.status === 201){
-                    preparaModalEditarApartamentos(data.data);
+                    preparaModalEditarCliente(data.data);
                 }
             }
         })
@@ -206,7 +229,7 @@
                     icon: 'success',
                     title: 'OhoWW...',
                     text: data.message,
-                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/apartamentos">Atualizar?</a>'
+                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
                 }).then(()=>{
                     window.location.reload();    
                 })
@@ -216,66 +239,64 @@
                     icon: 'warning',
                     title: 'ops...',
                     text: "Algo de errado aconteceu!",
-                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/apartamentos">Atualizar?</a>'
+                    footer: '<a href="<?=ROTA_GERAL?>/Administrativo/cliente">Atualizar?</a>'
             })
         });
         return "";
     }
 
-    function preparaModalEditarApartamentos(data) {
-        $('#apartamento').val(data[0].numero);
-        $('#descricao').val(data[0].descricao);           
+    function preparaModalEditarCliente(data) {
+        $('#nome').val(data[0].nome);
+        $('#email').val(data[0].email);         
+        $('#cpf').val(data[0].cpf);         
+        $('#telefone').val(data[0].telefone);          
+        $('#endereco').val(data[0].endereco);
         $('#tipo').val(data[0].tipo);
+        $('#empresa').val(data[0].empresa);
         $('#status').val(data[0].status);
         $('#id').val(data[0].id);
         $('#btnSubmit').addClass('Atualizar');
-        $('#exampleModalLabel').text("Atualizar apartamentos");
-        $('#modalApartamentos').modal('show');   
+        $('#exampleModalLabel').text("Atualizar Cliente");
+        $('#modal').modal('show');   
     }
 
     $('#btn_busca').click(function(){
         var texto = $('#txt_busca').val();
-        window.location.href ="<?=ROTA_GERAL?>/Administrativo/apartamentos/"+texto;
+        window.location.href ="<?=ROTA_GERAL?>/Administrativo/cliente/"+texto;
     });
 
     $('#novo').click(function(){
-        $('#exampleModalLabel').text("Cadastro de Apartamentos");
-        $('#modalApartamentos').modal('show');        
+        $('#exampleModalLabel').text("Cadastro de Cliente");
+        $('#modal').modal('show');        
     });
 
     $(document).ready(function(){
         $(document).on("click",".fechar",function(){ 
-            $('#modalEstudantes').modal('hide');
+            $('#modal').modal('hide');
         });
 
         $(document).on('click','.Salvar',function(){
             event.preventDefault();
-            envioRequisicaoPostViaAjax('Apartamento/salvarApartamentos', new FormData(document.getElementById("form")));
+            envioRequisicaoPostViaAjax('Cliente/salvarCliente', new FormData(document.getElementById("form")));
         });
 
         $(document).on('click','.view_data',function(){
             var id = $(this).attr("id");
             $('#btnSubmit').removeClass('Salvar');
-            envioRequisicaoGetViaAjax('Apartamento/buscaApartamentoPorId/' + id);
+            envioRequisicaoGetViaAjax('Cliente/buscaClientePorId/' + id);
         });
 
         $(document).on('click','.Atualizar',function(){
             event.preventDefault();
             $('#btnSubmit').attr('disabled','disabled');
             var id = $('#id').val();
-            envioRequisicaoPostViaAjax('Apartamento/atualizarApartamentos/' + id, new FormData(document.getElementById("form")));   
+            envioRequisicaoPostViaAjax('Cliente/atualizarCliente/' + id, new FormData(document.getElementById("form")));   
         });
 
         $(document).on('click','.view_Ativo',function(){    
             event.preventDefault();
             var code=$(this).attr("id");
-            envioRequisicaoGetViaAjax('Apartamento/changeStatusApartamentos/'+ code);
-        });    
-
-        $(document).on('click','.view_sujo',function(){    
-            event.preventDefault();
-            var code=$(this).attr("id");
-            envioRequisicaoGetViaAjax('Apartamento/changeStatusApartamentos/'+ code);
+            envioRequisicaoGetViaAjax('Cliente/changeStatusCliente/'+ code);
         });    
         
     });
